@@ -1,6 +1,6 @@
 ---
 asyncapi: 2.0.0
-id: "https://github.com/ideacrew/crm_gateway-server"
+id: "https://github.com/dchbx/crm_gateway-server"
 info:
   title: SugarCRM Gateway Adapter Service
   version: 0.1.0

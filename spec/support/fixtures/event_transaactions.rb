@@ -5,14 +5,14 @@ module Fixtures
     [
       {
         hbx_id: '213',
-        legal_name: 'ideacrew',
+        legal_name: 'dchbx',
         entity_kind: 's_corp',
         fein: '87879867',
         metadata: {
           command_name: :create,
           record_state: {
             x_id: '213',
-            legal_name: 'ideacrew',
+            legal_name: 'dchbx',
             entity_kind: 's_corp',
             fein: '87879867'
           }
@@ -20,13 +20,13 @@ module Fixtures
       },
       {
         hbx_id: '213',
-        legal_name: 'ideacrew',
+        legal_name: 'dchbx',
         entity_kind: 'c_corp',
         metadata: {
           command_name: :update_entity_kind,
           record_state: {
             x_id: '213',
-            legal_name: 'ideacrew',
+            legal_name: 'dchbx',
             entity_kind: 'c_corp',
             fein: '87879867'
           }
@@ -42,7 +42,7 @@ module Fixtures
           correlation_id: '8383838',
           record_state: {
             x_id: '213',
-            legal_name: 'ideacrew',
+            legal_name: 'dchbx',
             entity_kind: 'c_corp',
             fein: '99999999'
           }

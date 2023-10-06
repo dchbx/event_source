@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.name = 'event_source'
   spec.version = EventSource::VERSION
   spec.authors = ['Dan Thomas']
-  spec.email = ['info@ideacrew.com']
+  spec.email = ['info@dchbx.com']
 
   spec.summary =
     'Record changes to application state by storing updates as a sequence of events'
@@ -18,7 +18,7 @@ Gem::Specification.new do |spec|
                           then processes it to update values in the underlying model. It's an implementation of
                           Martin Fowler's Event Sourcing design pattern and adapted from code developed by
                           Philippe Creux"
-  spec.homepage = 'https://github.com/ideacrew/event_source'
+  spec.homepage = 'https://github.com/dchbx/event_source'
   spec.license = 'MIT'
   spec.required_ruby_version = Gem::Requirement.new('>= 2.5')
 
