@@ -117,41 +117,6 @@ module EventSource
 
         def resolve_subscriber_routing_keys(channel, operation); end
 
-        # def register_subscription(subscriber_klass, bindings)
-        #   consumer_proxy = consumer_proxy_for(bindings)
-
-        #   consumer_proxy.on_delivery do |delivery_info, metadata, payload|
-        #     on_receive_message(
-        #       subscriber_klass,
-        #       delivery_info,
-        #       metadata,
-        #       payload
-        #     )
-        #   end
-
-        #   subscribe_consumer(consumer_proxy)
-        # end
-
-        # def subscribe_consumer(consumer_proxy)
-        #   @subject.subscribe_with(consumer_proxy)
-        #   @consumers.push(consumer_proxy)
-        # end
-
-        # def consumer_proxy_for(bindings)
-        #   operation_bindings = convert_to_consumer_options(bindings[:amqp])
-
-        #   logger.debug 'consumer proxy options:'
-        #   logger.debug operation_bindings.inspect
-
-        #   BunnyConsumerProxy.new(
-        #     @subject.channel,
-        #     @subject,
-        #     '',
-        #     operation_bindings[:no_ack],
-        #     operation_bindings[:exclusive]
-        #   )
-        # end
-
         def on_receive_message(
           subscriber_klass,
           delivery_info,
@@ -164,17 +129,7 @@ module EventSource
           logger.debug metadata.inspect
           logger.debug payload.inspect
 
-          if delivery_info.routing_key
-            routing_key = [app_name, delivery_info.routing_key].join(delimiter)
-            executable = subscriber_klass.executable_for(routing_key)
-          end
-
-          unless executable
-            routing_key = [app_name, exchange_name].join(delimiter)
-            executable = subscriber_klass.executable_for(routing_key)
-          end
-
-          logger.debug "routing_key: #{routing_key}"
+          executable = find_executable(subscriber_klass, delivery_info)
           return unless executable
 
           subscriber = subscriber_klass.new
@@ -196,6 +151,13 @@ module EventSource
           subscriber = nil
         end
 
+        def find_executable(subscriber_klass, delivery_info)
+          subscriber_suffix = subscriber_klass_name_to_suffix(subscriber_klass)
+
+          find_executable_for_routing_key(subscriber_klass, delivery_info, subscriber_suffix) ||
+            find_default_executable(subscriber_klass, subscriber_suffix)
+        end
+
         def respond_to_missing?(name, include_private); end
 
         # Forward all missing method calls to the Bunny::Queue instance
@@ -204,6 +166,22 @@ module EventSource
         end
 
         private
+
+        def subscriber_klass_name_to_suffix(subscriber_klass)
+          subscriber_klass.name.downcase.gsub("::", '_')
+        end
+
+        def find_executable_for_routing_key(subscriber_klass, delivery_info, subscriber_suffix)
+          return unless delivery_info.routing_key
+
+          routing_key = [app_name, delivery_info.routing_key].join(delimiter)
+          subscriber_klass.executable_for(routing_key + "_#{subscriber_suffix}")
+        end
+
+        def find_default_executable(subscriber_klass, subscriber_suffix)
+          default_routing_key = [app_name, exchange_name].join(delimiter)
+          subscriber_klass.executable_for(default_routing_key + "_#{subscriber_suffix}")
+        end
 
         def delimiter
           EventSource.delimiter(:amqp)

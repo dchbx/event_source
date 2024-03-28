@@ -45,6 +45,7 @@ module EventSource
         def publish(payload:, publish_bindings:, headers: {})
           bunny_publish_bindings = sanitize_bindings((publish_bindings || {}).to_h)
           bunny_publish_bindings[:correlation_id] = headers.delete(:correlation_id) if headers[:correlation_id]
+          bunny_publish_bindings[:message_id] = headers.delete(:message_id) if headers[:message_id]
           bunny_publish_bindings[:headers] = headers unless headers.empty?
 
           logger.debug "BunnyExchange#publish  publishing message with bindings: #{bunny_publish_bindings.inspect}"

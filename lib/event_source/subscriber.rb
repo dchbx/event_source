@@ -100,11 +100,15 @@ module EventSource
         unless formatted_publisher_key.gsub(delimiter, '_') == identifier
           unique_key_elements.push(identifier)
         end
-        logger.debug "Subscriber#susbcribe Unique_key #{unique_key_elements.join(delimiter)}"
+
         return unless block_given?
 
+        subscriber_suffix = self.name.downcase.gsub('::', '_')
+        subscriber_unique_key = unique_key_elements.join(delimiter) + "_#{subscriber_suffix}"
+        logger.debug "Subscriber#susbcribe Unique key #{subscriber_unique_key}"
+
         EventSource::Subscriber.executable_container[
-          unique_key_elements.join(delimiter)
+          subscriber_unique_key
         ] =
           block
       end

@@ -31,5 +31,6 @@ module EventSource
     ConnectionNotFound = Class.new(Error)
     ServerConfigurationNotFound = Class.new(Error)
     ServerConfigurationInvalid = Class.new(Error)
+    MessageBuildError = Class.new(Error)
   end
 end

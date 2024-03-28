@@ -31,11 +31,16 @@ require 'event_source/queue'
 require 'event_source/worker'
 require 'event_source/publish_operation'
 require 'event_source/subscribe_operation'
+require 'event_source/message'
 require 'event_source/command'
 require 'event_source/publisher'
 require 'event_source/event'
 require 'event_source/subscriber'
 require 'event_source/operations/codec64'
+require 'event_source/operations/create_message'
+require 'event_source/operations/fetch_session'
+require 'event_source/operations/build_message_options'
+require 'event_source/operations/build_message'
 
 # Event source provides ability to compose, publish and subscribe to events
 module EventSource

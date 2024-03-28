@@ -112,13 +112,10 @@ EventSource.configure do |config|
   #   {
   #     url: ENV['RABBITMQ_SERVER']
   #   },
-  #   resque_bus: {
-  #     protocol: :resque_bus
-  #   }
   # ]
 
   # config.asyncapi_resources = AcaEntities::AsyncApi::Mitc
-  # config.asyncapi_resources = AcaEntities.find_resources_for(:enroll, %w[amqp resque_bus]) # will give you resouces in array of hashes form
+  # config.asyncapi_resources = AcaEntities.find_resources_for(:enroll, %w[amqp]) # will give you resouces in array of hashes form
   # AcaEntities::Operations::AsyncApi::FindResource.new.call(self)
 end
 

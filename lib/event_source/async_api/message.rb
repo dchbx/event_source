@@ -20,29 +20,13 @@ module EventSource
       # @!attribute [r] headers
       # Schema definition of the application headers. Schema must be of type "object".
       # It must not define the protocol headers.
-      # @return [Schema]
-      attribute :headers, Schema.meta(omittable: true)
+      # @return [Types::Any]
+      attribute :headers, Types::Any.meta(omittable: true)
 
       # @!attribute [r] payload
       # Definition of the message payload. It can be of any type but defaults to Schema object
       # @return [Types::Any]
       attribute :payload, Types::Any.meta(omittable: true)
-
-      # @!attribute [r] correlation_id
-      # Definition of the correlation ID used for message tracing or matching
-      # @return [String]
-      attribute :correlation_id do
-        # @!attribute [r] description
-        # An optional description of the identifier.
-        # CommonMark syntax can be used for rich text representation
-        # @return [String]
-        attribute :description, Types::String.meta(omittable: true)
-
-        # @!attribute [r] location
-        # Required. A runtime expression that specifies the location of the correlation ID
-        # @return [String]
-        attribute :location, Types::String.meta(omittable: true)
-      end.meta(omittable: true)
 
       # @!attribute [r] schema_format
       # A string containing the name of the schema format used to define the message payload.

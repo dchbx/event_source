@@ -66,7 +66,10 @@ module EventSource
 
         logger.debug "Publisher#publish publish_operation_name: #{publish_operation_name}"
         publish_operation = find_publish_operation_for(publish_operation_name)
-        publish_operation.call(event.payload, {headers: event.headers})
+        payload = event.message&.payload || event.payload
+        headers = event.message&.headers || event.headers
+
+        publish_operation.call(payload, {headers: headers})
       end
 
       def channel_name

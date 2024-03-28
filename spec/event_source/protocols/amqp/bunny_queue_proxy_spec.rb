@@ -168,4 +168,157 @@ RSpec.describe EventSource::Protocols::Amqp::BunnyQueueProxy do
     #   end
     # end
   end
+
+  context "executable lookup with subscriber suffix" do
+    let(:connection_manager) { EventSource::ConnectionManager.instance }
+    let!(:connection) { connection_manager.add_connection(my_server) }
+
+    let(:event_log_subscriber) do
+      Pathname.pwd.join(
+        "spec",
+        "rails_app",
+        "app",
+        "event_source",
+        "subscribers",
+        "event_log_subscriber.rb"
+      )
+    end
+
+    let(:enterprise_subscriber) do
+      Pathname.pwd.join(
+        "spec",
+        "rails_app",
+        "app",
+        "event_source",
+        "subscribers",
+        "enterprise_subscriber.rb"
+      )
+    end
+
+    let(:publish_resource) do
+      EventSource::AsyncApi::Operations::AsyncApiConf::LoadPath
+        .new
+        .call(
+          path:
+            Pathname.pwd.join(
+              "spec",
+              "support",
+              "asyncapi",
+              "amqp_audit_log_publish.yml"
+            )
+        )
+        .success
+    end
+
+    let(:subscribe_resource) do
+      EventSource::AsyncApi::Operations::AsyncApiConf::LoadPath
+        .new
+        .call(
+          path:
+            Pathname.pwd.join(
+              "spec",
+              "support",
+              "asyncapi",
+              "amqp_audit_log_subscribe.yml"
+            )
+        )
+        .success
+    end
+
+    let(:subscribe_two_resource) do
+      EventSource::AsyncApi::Operations::AsyncApiConf::LoadPath
+        .new
+        .call(
+          path:
+            Pathname.pwd.join(
+              "spec",
+              "support",
+              "asyncapi",
+              "amqp_enterprise_subscribe.yml"
+            )
+        )
+        .success
+    end
+
+    let(:publish_channel) do
+      connection.add_channel(
+        "enroll.audit_log.events.created",
+        publish_resource.channels.first
+      )
+    end
+    let(:subscribe_channel) do
+      connection.add_channel(
+        "on_enroll.enroll.audit_log.events",
+        subscribe_resource.channels.first
+      )
+    end
+    let(:subscribe_two_channel) do
+      connection.add_channel(
+        "on_enroll.enroll.enterprise.events",
+        subscribe_two_resource.channels.first
+      )
+    end
+
+    let(:load_subscribers) do
+      [event_log_subscriber, enterprise_subscriber].each do |file|
+        require file.to_s
+      end
+    end
+
+    before do
+      allow(EventSource).to receive(:app_name).and_return("enroll")
+      connection.start unless connection.active?
+      publish_channel
+      subscribe_channel
+      subscribe_two_channel
+      load_subscribers
+      allow(subject).to receive(:exchange_name) { exchange_name }
+    end
+
+    let(:audit_log_proc) do
+      EventSource::Subscriber.executable_container[
+        "enroll.enroll.audit_log.events_subscribers_eventlogsubscriber"
+      ]
+    end
+
+    let(:enterprise_advance_day_proc) do
+      EventSource::Subscriber.executable_container[
+        "enroll.enroll.enterprise.events.date_advanced_subscribers_enterprisesubscriber"
+      ]
+    end
+
+    context "when routing key based executable is not found" do
+      let(:delivery_info) do
+        double(routing_key: "enroll.enterprise.events.date_advanced")
+      end
+
+      let(:exchange_name) { "enroll.audit_log.events" }
+
+      it "should return default audit log proc" do
+        executable =
+          subject.find_executable(
+            Subscribers::EventLogSubscriber,
+            delivery_info
+          )
+        expect(executable).to match(audit_log_proc)
+      end
+    end
+
+    context "when routing key based executable is found" do
+      let(:delivery_info) do
+        double(routing_key: "enroll.enterprise.events.date_advanced")
+      end
+
+      let(:exchange_name) { "enroll.enterprise.events" }
+
+      it "should return executable for the routing key" do
+        executable =
+          subject.find_executable(
+            Subscribers::EnterpriseSubscriber,
+            delivery_info
+          )
+        expect(executable).to match(enterprise_advance_day_proc)
+      end
+    end
+  end
 end
