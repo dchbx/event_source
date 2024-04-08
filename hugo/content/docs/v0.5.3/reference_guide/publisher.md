@@ -29,4 +29,4 @@ end
 
 <!-- prettier_ignore_end -->
 
-EventSource includes protocol support for: `:amap`, `:http` and `:soap` over http. There's a seperate, necessary process for configuring protcols, channels and associated elements to enable event messaging. These elements must be declared in AsyncApi YAML files in the [AcaEntities repository](https://github.com/ideacrew/aca_entities) for loading during service startup. Contact a senior developer or DevOps for more information.
+EventSource includes protocol support for: `:amap`, `:http` and `:soap` over http. There's a seperate, necessary process for configuring protcols, channels and associated elements to enable event messaging. These elements must be declared in AsyncApi YAML files in the [AcaEntities repository](https://github.com/dchbx/aca_entities) for loading during service startup. Contact a senior developer or DevOps for more information.

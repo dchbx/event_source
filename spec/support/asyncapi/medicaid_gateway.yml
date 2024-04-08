@@ -5,9 +5,9 @@ info:
   version: 0.1.0
   description: Publish and Subsribe configuration for the Medicaid Gateway service
   contact:
-    name: IdeaCrew
-    url: https://ideacrew.com
-    email: info@ideacrew.com
+    name: dchbx
+    url: https://dchbx.com
+    email: info@dchbx.com
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT

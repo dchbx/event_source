@@ -5,9 +5,9 @@ info:
   version: 0.1.0
   description: AMQP Subsribe configuration for the Enroll App services
   contact:
-    name: IdeaCrew
-    url: https://ideacrew.com
-    email: info@ideacrew.com
+    name: DCHBX
+    url: https://dchbx.com
+    email: info@dchbx.com
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT

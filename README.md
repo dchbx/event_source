@@ -217,7 +217,7 @@ end
 
 <!-- prettier_ignore_end -->
 
-EventSource includes protocol support for: `:amap`, `:http` and `:soap` over http. There's a seperate, necessary process for configuring protcols, channels and associated elements to enable event messaging. These elements must be declared in AsyncApi YAML files in the [AcaEntities repository](https://github.com/ideacrew/aca_entities) for loading during service startup. Contact a senior developer or DevOps for more information.
+EventSource includes protocol support for: `:amap`, `:http` and `:soap` over http. There's a seperate, necessary process for configuring protcols, channels and associated elements to enable event messaging. These elements must be declared in AsyncApi YAML files in the [AcaEntities repository](https://github.com/dchbx/aca_entities) for loading during service startup. Contact a senior developer or DevOps for more information.
 
 ### Subscriber
 
@@ -227,9 +227,9 @@ The following example illustrates how the Polypress microservice may access even
 
 1. The source service, Enroll App for example, publishes events over AMQP protocol using the channel: `organizations.organization_events`
 
-2. An AMQP AsyncAPI YAML file in the [AcaEntities repository](https://github.com/ideacrew/aca_entities) for Enroll App configures a Channel Item and Publish Operation for `organizations.organization_events`
+2. An AMQP AsyncAPI YAML file in the [AcaEntities repository](https://github.com/dchbx/aca_entities) for Enroll App configures a Channel Item and Publish Operation for `organizations.organization_events`
 
-3. An AMQP AsyncAPI YAML file in the [AcaEntities repository](https://github.com/ideacrew/aca_entities) for Polypress configures a Channel Item and Subscribe Operation for `on_polypress.organizations.organization_events`
+3. An AMQP AsyncAPI YAML file in the [AcaEntities repository](https://github.com/dchbx/aca_entities) for Polypress configures a Channel Item and Subscribe Operation for `on_polypress.organizations.organization_events`
 
 4. The respective AMQP AsyncAPI file configurations include bindings for event message durability, acknowledgement and related settings.
 
@@ -405,7 +405,7 @@ broadcast_publishers = %w[
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/ideacrew/event_source.
+Bug reports and pull requests are welcome on GitHub at https://github.com/dchbx/event_source.
 
 ## License
 
