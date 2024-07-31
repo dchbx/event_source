@@ -26,6 +26,16 @@ module EventSource
       @publisher_container ||= Concurrent::Map.new
     end
 
+    def self.initialization_registry
+      @initialization_registry ||= Concurrent::Array.new
+    end
+
+    def self.initialize_publishers
+      self.initialization_registry.each do |pub|
+        pub.validate
+      end
+    end
+
     def self.[](exchange_ref)
       # TODO: validate publisher already exists
       # raise EventSource::Error::PublisherAlreadyRegisteredError.new(id) if registry.key?(id)
@@ -46,12 +56,15 @@ module EventSource
       }
       base.extend(ClassMethods)
 
-      TracePoint.trace(:end) do |t|
-        if base == t.self
-          base.validate
-          t.disable
-        end
-      end
+      # TODO: Wrap this back in a delayed tracepoint
+      EventSource.register_publisher(base)
+
+      # TracePoint.trace(:end) do |t|
+      #   if base == t.self
+      #     base.validate
+      #     t.disable
+      #   end
+      # end
     end
 
     # methods to register events
