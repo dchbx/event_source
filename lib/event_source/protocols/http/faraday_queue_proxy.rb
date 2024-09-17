@@ -53,8 +53,7 @@ module EventSource
           unique_key = [app_name, formatted_exchange_name].join(delimiter) + "_#{subscriber_suffix}"
           logger.debug "FaradayQueueProxy#register_subscription Subscriber Class #{subscriber_klass}"
           logger.debug "FaradayQueueProxy#register_subscription Unique_key #{unique_key}"
-          executable = subscriber_klass.executable_for(unique_key)
-          @subject.actions.push(executable)
+          @subject.register_action(subscriber_klass, action)
         end
 
         def consumer_proxy_for(operation_bindings)
