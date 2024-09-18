@@ -56,15 +56,7 @@ module EventSource
       }
       base.extend(ClassMethods)
 
-      # TODO: Wrap this back in a delayed tracepoint
       EventSource.register_publisher(base)
-
-      # TracePoint.trace(:end) do |t|
-      #   if base == t.self
-      #     base.validate
-      #     t.disable
-      #   end
-      # end
     end
 
     # methods to register events

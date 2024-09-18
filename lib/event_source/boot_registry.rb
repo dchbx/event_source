@@ -23,6 +23,10 @@ module EventSource
       @unbooted_subscribers = Set.new
       @booted_publishers = Set.new
       @booted_subscribers = Set.new
+      # This is our re-entrant mutex.  We're going to use it to make sure that
+      # registration and boot methods aren't allowed to simultaneously alter
+      # our state.  You'll notice most methods on this class are wrapped in
+      # synchronize calls against this.
       @bootex = Monitor.new
       @booted = false
     end
@@ -37,6 +41,10 @@ module EventSource
       end
     end
 
+    # Register a publisher for EventSource.
+    #
+    # If the EventSource hasn't been booted, save publisher for later.
+    # Otherwise, boot it now.
     def register_publisher(publisher_klass)
       @bootex.synchronize do
         if @booted
@@ -48,6 +56,10 @@ module EventSource
       end
     end
 
+    # Register a subscriber for EventSource.
+    #
+    # If the EventSource hasn't been booted, save the subscriber for later.
+    # Otherwise, boot it now.
     def register_subscriber(subscriber_klass)
       @bootex.synchronize do
         if @booted
@@ -59,6 +71,7 @@ module EventSource
       end
     end
 
+    # Boot the publishers.
     def boot_publishers!
       @bootex.synchronize do
         @unbooted_publishers.each do |pk|
@@ -69,6 +82,7 @@ module EventSource
       end
     end
 
+    # Boot the subscribers.
     def boot_subscribers!
       @bootex.synchronize do
         @unbooted_subscribers.each do |sk|
