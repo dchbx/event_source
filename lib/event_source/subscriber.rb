@@ -49,12 +49,7 @@ module EventSource
       base.extend ClassMethods
       base.include InstanceMethods
 
-      TracePoint.trace(:end) do |t|
-        if base == t.self
-          base.create_subscription
-          t.disable
-        end
-      end
+      EventSource.register_subscriber(base)
     end
 
     module InstanceMethods

@@ -22,7 +22,12 @@ RSpec.describe EventSource::Command do
     # binding.pry
   end
 
+  before :each do
+    EventSource.initialize!(true)
+  end
+
   context '.event' do
+
     let(:organization_params) do
       {
         hbx_id: '553234',

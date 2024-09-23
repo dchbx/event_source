@@ -7,8 +7,6 @@ require "active_job/railtie"
 
 Bundler.require(*Rails.groups)
 
-require "event_source"
-
 module RailsApp
   class Application < Rails::Application
     config.root = File.expand_path('../..', __FILE__)

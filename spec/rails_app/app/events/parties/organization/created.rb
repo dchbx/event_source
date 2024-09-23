@@ -6,7 +6,7 @@ module Parties
       publisher_path 'parties.organization_publisher'
 
       # Schema used to validaate Event payload
-      contract_class 'Parties::Organization::CreateContract'
+      # contract_class 'Parties::Organization::CreateContract'
       attribute_keys :hbx_id, :legal_name, :fein, :entity_kind
     end
   end
