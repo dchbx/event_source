@@ -11,6 +11,7 @@ require 'dry/validation'
 require 'dry-struct'
 require 'oj'
 require 'active_support/all' # TODO: Remove ActiveSupport dependency
+require 'deep_merge/rails_compat'
 
 require 'event_source/version'
 require 'event_source/ruby_versions'
