@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'deep_merge'
+require 'deep_merge/rails_compat'
 
 module EventSource
   module Configure
