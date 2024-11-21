@@ -1,9 +1,4 @@
-name: Release
-
-on:
-  push:
-    tags:
-      - v[0-9]+.[0-9]+.[0-9]+
+# Release notes template (https://docs.github.com/en/repositories/releasing-projects-on-github/automatically-generated-release-notes)
 
 changelog:
   categories:
