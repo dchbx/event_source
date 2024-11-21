@@ -10,7 +10,7 @@ Follow the steps below to package and release a new version of the gem.
 
 ## Local Release Preparation
 1. Checkout the main branch and pull the latest changes.
-2. Create a branch named after the version you are releasing, e.g., v1.0.0.
+2. Create a branch name using the desired version number followed by the `-release` suffix, e.g., `1.0.0-release`.
 3. Update the version number in the `lib/event_source/version.rb` file. Note the [correct format](https://guides.rubygems.org/specification-reference/#version); only digits and dots are allowed. Do not include a `v` prefix.
 4. Update the `Gemfile.lock` file using the most appropriate command:
     - `bundle update --patch --conservative event_source` for a patch release.
@@ -24,6 +24,7 @@ Follow the steps below to package and release a new version of the gem.
 ## Publishing the Release
 1. Once the pull request is approved and merged, checkout the main branch and pull the latest changes.
 2. Create a new annotated tag with the version number, e.g., `git tag -a v1.0.0 -m "v1.0.0"`.
+    - IMPORTANT: make sure the tag abides by the format `vX.Y.Z` where `X`, `Y`, and `Z` are integers. It is important that the tag name has a different format than the branch name to avoid confusion with Bundler.
 3. Push the tag to the remote repository, e.g., `git push origin refs/tags/v1.0.0`.
 4. GitHub Actions will automatically create a new release on the [GitHub Releases](https://github.com/dchbx/event_source/releases) page with release notes. Confirm that the release was successfully published there and that all intended commits are included in the release.
 
