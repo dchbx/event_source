@@ -49,7 +49,10 @@ module EventSource
           bunny_publish_bindings[:headers] = headers unless headers.empty?
 
           logger.debug "BunnyExchange#publish  publishing message with bindings: #{bunny_publish_bindings.inspect}"
-          @subject.publish(payload.to_json, bunny_publish_bindings)
+
+          payload = payload.to_json unless is_binary?(payload)
+          @subject.publish(payload, bunny_publish_bindings)
+
           logger.debug "BunnyExchange#publish  published message: #{payload}"
           logger.debug "BunnyExchange#publish  published message to exchange: #{@subject.name}"
         end
@@ -65,6 +68,12 @@ module EventSource
 
         def message_id
           SecureRandom.uuid
+        end
+
+        def is_binary?(payload)
+          return false unless payload.respond_to?(:encoding)
+
+          payload.encoding == Encoding::BINARY
         end
 
         # Filtering and renaming AsyncAPI Operation bindings to Bunny/RabitMQ

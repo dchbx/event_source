@@ -321,4 +321,99 @@ RSpec.describe EventSource::Protocols::Amqp::BunnyQueueProxy do
       end
     end
   end
+
+  describe '#decode_payload' do
+    let(:payload) { 'test_payload' }
+    let(:mime_decode_operation) { instance_double(EventSource::Operations::MimeDecode) }
+    let(:channel_proxy) { instance_double('ChannelProxy', subject: double) }
+    let(:async_api_channel_item) { instance_double('AsyncApiChannelItem', bindings: channel_bindings) }
+
+    let(:subscribe_operation) do
+      EventSource::AsyncApi::SubscribeOperation.new(
+        operationId: 'subscribe_message',
+        bindings: { amqp: { key: 'value' } },
+        message: {
+          'bindings' => {
+            'amqp' => {
+              'contentEncoding' => 'application/zlib'
+            }
+          }
+        }
+      )
+    end
+
+    let(:instance) { described_class.new(channel_proxy, async_api_channel_item) }
+    let(:channel_bindings) do
+      {
+        amqp: {
+          is: :queue,
+          queue: {
+            name: 'on_event_source.test_queue',
+            durable: true,
+            exclusive: false,
+            auto_delete: false,
+            vhost: 'event_source'
+          }
+        }
+      }
+    end
+
+    let(:bunny_queue) { instance_double('BunnyQueue') }
+
+    before do
+      allow_any_instance_of(described_class).to receive(:bunny_queue_for).and_return(bunny_queue)
+      allow_any_instance_of(described_class).to receive(:bind_exchange).and_return(true)
+      allow(async_api_channel_item).to receive(:subscribe).and_return(subscribe_operation)
+      allow(EventSource::Operations::MimeDecode).to receive(:new).and_return(mime_decode_operation)
+    end
+
+    context 'when there is no message in the subscribe operation' do
+      let(:subscribe_operation) { EventSource::AsyncApi::SubscribeOperation.new(operationId: 'subscribe_message' ) }
+
+      it 'returns the original payload' do
+        expect(instance.decode_payload(payload)).to eq(payload)
+      end
+    end
+
+    context 'when there is no contentEncoding in the message bindings' do
+      let(:subscribe_operation) { EventSource::AsyncApi::SubscribeOperation.new(operationId: 'subscribe_message', message: { }) }
+
+      it 'returns the original payload' do
+        expect(instance.decode_payload(payload)).to eq(payload)
+      end
+    end
+
+    context 'when contentEncoding is provided' do
+      context 'when decoding is successful' do
+        let(:decoded_payload) { 'decoded_payload' }
+
+        before do
+          allow(mime_decode_operation).to receive(:call)
+            .with('application/zlib', payload)
+            .and_return(Dry::Monads::Success(decoded_payload))
+        end
+
+        it 'returns the decoded payload' do
+          expect(instance.decode_payload(payload)).to eq(decoded_payload)
+        end
+      end
+
+      context 'when decoding fails' do
+        let(:failure_message) { 'Decoding error' }
+
+        before do
+          allow(mime_decode_operation).to receive(:call)
+            .with('application/zlib', payload)
+            .and_return(Dry::Monads::Failure(failure_message))
+        end
+
+        it 'logs the error and raises a PayloadDecodeError' do
+          expect(instance.logger).to receive(:error).with("Failed to decompress message \n  due to: #{failure_message}")
+          expect do
+            instance.decode_payload(payload)
+          end.to raise_error(EventSource::Error::PayloadDecodeError, failure_message)
+        end
+      end
+    end
+  end
 end

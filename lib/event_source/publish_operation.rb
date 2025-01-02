@@ -3,6 +3,8 @@
 module EventSource
   # Publish {EventSource::Event} messages
   class PublishOperation
+    include EventSource::Logging
+
     # @attr_reader [EventSource::Channel] channel the channel instance used by
     #   this PublishOperation
     # @attr_reader [Object] subject instance of the protocol's publish class
@@ -26,11 +28,40 @@ module EventSource
     # @example
     #   #publish("Message", :headers => { })
     def call(payload, options = {})
+      payload = encode_payload(payload)
       @subject.publish(
         payload: payload,
         publish_bindings: @async_api_publish_operation[:bindings],
         headers: options[:headers] || {}
       )
+    end
+
+    # Encodes the given payload based on the `contentEncoding` specified in the AsyncAPI *_publish.yml message bindings.
+    #
+    # For example, if `contentEncoding` is set to `application/zlib`, the payload will be compressed using zlib.
+    # If no `contentEncoding` is provided, the payload will be returned as-is without modification.
+    #
+    # Note:
+    # - Encoding is not needed for the HTTP protocol, as encoding is handled at the server level.
+    # - For other protocols like AMQP, encoding is supported to ensure proper message transmission.
+    #
+    # @param payload [String, Hash] The payload to be encoded.
+    # @return [String] The encoded payload, or the original payload if no encoding is specified.
+    # @raise [EventSource::Error::PayloadEncodeError] if the encoding process fails.
+    def encode_payload(payload)
+      return payload unless @async_api_publish_operation.message
+
+      message_bindings = @async_api_publish_operation.message['bindings']
+      encoding = message_bindings.first[1]['contentEncoding'] if message_bindings
+      return payload unless encoding
+
+      output = EventSource::Operations::MimeEncode.new.call(encoding, payload)
+      if output.success?
+        output.value!
+      else
+        logger.error "Failed to decompress message \n  due to: #{output.failure}"
+        raise EventSource::Error::PayloadEncodeError, output.failure
+      end
     end
   end
 end
