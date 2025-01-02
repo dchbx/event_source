@@ -120,6 +120,83 @@ RSpec.describe EventSource::PublishOperation do
     it 'should forward the message to a queue bound to the exchange' do
     end
   end
+
+  describe '#encode_payload' do
+
+    let(:channel) { instance_double('EventSource::Channel') }
+    let(:publish_proxy) { instance_double('PublishProxy', publish: true) }
+    let(:async_api_publish_operation) do
+      EventSource::AsyncApi::PublishOperation.new({
+        operationId: 'publish_message',
+        bindings: { amqp: { key: 'value' } },
+        message: {
+          'bindings' => { 'amqp' => { 'contentEncoding' => 'application/zlib' } }
+        }
+      })
+    end
+
+    let(:instance) { described_class.new(channel, publish_proxy, async_api_publish_operation) }
+
+    describe '#encode_payload' do
+      let(:payload) { 'test_payload' }
+      let(:mime_encode_operation) { instance_double(EventSource::Operations::MimeEncode) }
+
+      before do
+        allow(EventSource::Operations::MimeEncode).to receive(:new).and_return(mime_encode_operation)
+      end
+
+      context 'when there is no message in the async API publish operation' do
+        let(:async_api_publish_operation) { EventSource::AsyncApi::PublishOperation.new({ operationId: 'publish_message', bindings: {} }) }
+
+        it 'returns the original payload' do
+          expect(instance.encode_payload(payload)).to eq(payload)
+        end
+      end
+
+      context 'when there is no contentEncoding in the message bindings' do
+        let(:async_api_publish_operation) do
+          EventSource::AsyncApi::PublishOperation.new({ operationId: 'publish_message', message: { } })
+        end
+
+        it 'returns the original payload' do
+          expect(instance.encode_payload(payload)).to eq(payload)
+        end
+      end
+
+      context 'when contentEncoding is provided' do
+        context 'when encoding is successful' do
+          let(:encoded_payload) { 'encoded_payload' }
+
+          before do
+            allow(mime_encode_operation).to receive(:call)
+              .with('application/zlib', payload)
+              .and_return(Dry::Monads::Success(encoded_payload))
+          end
+
+          it 'returns the encoded payload' do
+            expect(instance.encode_payload(payload)).to eq(encoded_payload)
+          end
+        end
+
+        context 'when encoding fails' do
+          let(:failure_message) { 'Encoding error' }
+
+          before do
+            allow(mime_encode_operation).to receive(:call)
+              .with('application/zlib', payload)
+              .and_return(Dry::Monads::Failure(failure_message))
+          end
+
+          it 'logs the error and raises a PayloadEncodeError' do
+            expect(instance.logger).to receive(:error).with("Failed to decompress message \n  due to: #{failure_message}")
+            expect do
+              instance.encode_payload(payload)
+            end.to raise_error(EventSource::Error::PayloadEncodeError, failure_message)
+          end
+        end
+      end
+    end
+  end
 end
 
 # RSpec.describe EventSource::PublishOperation do
