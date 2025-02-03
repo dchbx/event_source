@@ -21,7 +21,7 @@ module EventSource
       # @return [Dry::Monads::Success<String>] if decoding is successful
       # @return [Dry::Monads::Failure<String>] if an error occurs (e.g., invalid MIME type, decoding failure)
       def call(mime_type, payload)
-        valid_payload = yield validate_payload(payload, mime_type)
+        valid_payload, mime_type = yield validate_payload(payload, mime_type.to_s)
         decoded_data = yield decode(valid_payload, mime_type)
 
         Success(decoded_data)
@@ -38,15 +38,18 @@ module EventSource
       # @return [Dry::Monads::Success<String>] if the payload is valid
       # @return [Dry::Monads::Failure<String>] if the payload is invalid
       def validate_payload(payload, mime_type)
-        unless MIME_TYPES.include?(mime_type.to_s)
+        unless MIME_TYPES.include?(mime_type)
           return Failure("Invalid MIME type '#{mime_type}'. Supported types are: #{MIME_TYPES.join(', ')}.")
         end
 
-        if mime_type.to_s == 'application/zlib' && !binary_payload?(payload)
-          return Failure("Payload must be binary-encoded for MIME type 'application/zlib'.")
+        # Allow JSON string payloads to pass validation to avoid processing failures
+        # for existing JSON messages in the queue. These messages may have been queued
+        # with the wrong MIME type ('application/zlib') but are still valid JSON.
+        if mime_type == 'application/zlib'
+          return Failure("Payload must be binary-encoded for MIME type 'application/zlib'.") unless binary_payload?(payload) || valid_json_string?(payload)
         end
 
-        Success(payload)
+        Success([payload, mime_type])
       end
 
       # Decodes the payload using the specified MIME type.
@@ -58,7 +61,7 @@ module EventSource
       # @return [Dry::Monads::Success<String>] if decoding is successful
       # @return [Dry::Monads::Failure<String>] if decoding fails
       def decode(payload, mime_type)
-        decoded_data = Zlib.inflate(payload) if mime_type.to_s == 'application/zlib'
+        decoded_data = Zlib.inflate(payload) if mime_type == 'application/zlib' && binary_payload?(payload)
 
         Success(decoded_data || payload)
       rescue Zlib::Error => e
@@ -75,6 +78,13 @@ module EventSource
 
         payload.encoding == Encoding::BINARY
       end
+
+      def valid_json_string?(data)
+        data.is_a?(String) && JSON.parse(data)
+        true
+      rescue JSON::ParserError
+        false
+      end      
     end
   end
 end

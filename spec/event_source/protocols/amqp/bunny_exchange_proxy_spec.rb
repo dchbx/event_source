@@ -28,7 +28,7 @@ RSpec.describe EventSource::Protocols::Amqp::BunnyExchangeProxy do
 
   describe '#publish' do
     it 'publishes the payload with the correct bindings and headers' do
-      subject.publish(payload: payload, publish_bindings: publish_bindings, headers: headers)
+      subject.publish(payload: payload.to_json, publish_bindings: publish_bindings, headers: headers)
 
       expect(bunny_exchange).to have_received(:publish).with(payload.to_json, {
         correlation_id: '12345',
@@ -41,7 +41,7 @@ RSpec.describe EventSource::Protocols::Amqp::BunnyExchangeProxy do
       expect(subject.logger).to receive(:debug).with(/published message:/)
       expect(subject.logger).to receive(:debug).with(/published message to exchange:/)
 
-      subject.publish(payload: payload, publish_bindings: publish_bindings, headers: headers)
+      subject.publish(payload: payload.to_json, publish_bindings: publish_bindings, headers: headers)
     end
 
     context 'when the payload is binary' do

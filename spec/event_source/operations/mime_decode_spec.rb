@@ -52,5 +52,47 @@ RSpec.describe EventSource::Operations::MimeDecode do
         expect(result.failure).to eq("Payload must be binary-encoded for MIME type 'application/zlib'.")
       end
     end
+
+    context "when the mime_type is 'application/zlib'" do
+      context "and the payload is a JSON string but not binary" do
+        let(:json_string) { "Invalid compressed data".to_json }
+        let(:mime_type) { "application/zlib" }
+    
+        it "passes validation" do
+          result = subject.call(mime_type, json_string)
+    
+          expect(result).to be_success
+          expect(result.value!).to eq(json_string)
+        end
+      end
+    
+      context "and the payload is neither binary nor valid JSON" do
+        let(:non_json_payload) { "Invalid compressed data" }
+        let(:mime_type) { "application/zlib" }
+    
+        it "returns a failure with a validation error message" do
+          result = subject.call(mime_type, non_json_payload)
+    
+          expect(result).to be_failure
+          expect(result.failure).to eq("Payload must be binary-encoded for MIME type 'application/zlib'.")
+        end
+      end
+    
+      context "and the payload is not binary and raises an error when parsed as JSON" do
+        let(:corrupted_json_payload) { "Invalid compressed data" }
+        let(:mime_type) { "application/zlib" }
+    
+        before do
+          allow(JSON).to receive(:parse).with(corrupted_json_payload).and_raise(JSON::ParserError)
+        end
+    
+        it "returns a failure with a validation error message" do
+          result = subject.call(mime_type, corrupted_json_payload)
+    
+          expect(result).to be_failure
+          expect(result.failure).to eq("Payload must be binary-encoded for MIME type 'application/zlib'.")
+        end
+      end
+    end    
   end
 end
