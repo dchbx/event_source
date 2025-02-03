@@ -79,6 +79,15 @@ module EventSource
         payload.encoding == Encoding::BINARY
       end
 
+      # For future reference, here is the implementation of the `zlib_compressed?` method:
+      # Binary encoding check alone is unreliable since the payload may not be zlib-compressed.
+      # Instead, verify if the payload starts with "\x78" to determine zlib compression.
+      def zlib_compressed?(payload)
+        return false unless payload.is_a?(String)
+
+        payload.start_with?("\x78")
+      end
+
       def valid_json_string?(data)
         data.is_a?(String) && JSON.parse(data)
         true

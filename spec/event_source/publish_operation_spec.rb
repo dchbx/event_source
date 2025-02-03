@@ -188,7 +188,7 @@ RSpec.describe EventSource::PublishOperation do
           end
 
           it 'logs the error and raises a PayloadEncodeError' do
-            expect(instance.logger).to receive(:error).with("Failed to decompress message \n  due to: #{failure_message}")
+            expect(instance.logger).to receive(:error).with("Failed to encode message \n  due to: #{failure_message}")
             expect do
               instance.encode_payload(payload)
             end.to raise_error(EventSource::Error::PayloadEncodeError, failure_message)
