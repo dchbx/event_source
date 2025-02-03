@@ -135,7 +135,16 @@ module EventSource
 
           subscriber = subscriber_klass.new
           subscriber.channel = @subject.channel
-          payload = decode_payload(payload)
+
+          begin
+            payload = decode_payload(payload)
+          rescue EventSource::Error::PayloadDecodeError, StandardError => e
+            logger.error "Payload decoding failed: #{e.message} \n  backtrace: #{e.backtrace.join("\n")} \n payload: #{payload}"
+            # Acknowledge the message so it doesn't block the queue
+            subscriber.ack(delivery_info.delivery_tag)
+            return
+          end
+
           subscription_handler =
             EventSource::Protocols::Amqp::BunnyConsumerHandler.new(
               subscriber,
@@ -171,7 +180,10 @@ module EventSource
           if output.success?
             output.value!
           else
-            logger.error "Failed to decompress message \n  due to: #{output.failure}"
+            logger.error '*' * 40
+            logger.error payload.encoding if payload.respond_to?(:encoding)
+            logger.error payload.inspect
+            logger.error "Failed to decode message \n  due to: #{output.failure} \n  payload: #{payload}"
             raise EventSource::Error::PayloadDecodeError, output.failure
           end
         end

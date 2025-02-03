@@ -56,7 +56,7 @@ module EventSource
       if output.success?
         output.value!
       else
-        logger.error "Failed to decompress message \n  due to: #{output.failure}"
+        logger.error "Failed to encode message \n  due to: #{output.failure}"
         raise EventSource::Error::PayloadEncodeError, output.failure
       end
     end
