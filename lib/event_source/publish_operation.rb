@@ -49,10 +49,7 @@ module EventSource
     # @return [String] The encoded payload, or the original payload if no encoding is specified.
     # @raise [EventSource::Error::PayloadEncodeError] if the encoding process fails.
     def encode_payload(payload)
-      return payload unless @async_api_publish_operation.message
-
-      message_bindings = @async_api_publish_operation.message['bindings']
-      encoding = message_bindings.first[1]['contentEncoding'] if message_bindings
+      encoding = determine_encoding
       return payload unless encoding
 
       output = EventSource::Operations::MimeEncode.new.call(encoding, payload)
@@ -62,6 +59,20 @@ module EventSource
         logger.error "Failed to decompress message \n  due to: #{output.failure}"
         raise EventSource::Error::PayloadEncodeError, output.failure
       end
+    end
+
+    # Determines the encoding for the payload based on message bindings or protocol defaults.
+    # - If message bindings are present, uses the 'contentEncoding' value from the bindings.
+    # - If no message bindings are present and the protocol is AMQP, uses the default encoding for the AMQP protocol. Other protocols return nil.
+    def determine_encoding
+      message_bindings = @async_api_publish_operation.message&.dig('bindings')
+      return message_bindings.first[1]['contentEncoding'] if message_bindings.present?
+
+      amqp_protocol? ? "#{subject.class}::DefaultMimeType".constantize : nil
+    end
+
+    def amqp_protocol?
+      subject.is_a?(EventSource::Protocols::Amqp::BunnyExchangeProxy)
     end
   end
 end

@@ -15,6 +15,8 @@ module EventSource
         # @attr_reader [EventSource::Protcols::Amqp::BunnyChannelProxy] channel_proxy the channel_proxy used to create this exchange
         attr_reader :subject, :channel_proxy
 
+        DefaultMimeType = 'application/json'.freeze
+
         # @param [EventSource::AsyncApi::Channel] channel_proxy instance on which to open this Exchange
         # @param [Hash<EventSource::AsyncApi::Exchange>] exchange_bindings instance with configuration for this Exchange
         def initialize(channel_proxy, exchange_bindings)
@@ -50,7 +52,6 @@ module EventSource
 
           logger.debug "BunnyExchange#publish  publishing message with bindings: #{bunny_publish_bindings.inspect}"
 
-          payload = payload.to_json unless is_binary?(payload)
           @subject.publish(payload, bunny_publish_bindings)
 
           logger.debug "BunnyExchange#publish  published message: #{payload}"
@@ -68,12 +69,6 @@ module EventSource
 
         def message_id
           SecureRandom.uuid
-        end
-
-        def is_binary?(payload)
-          return false unless payload.respond_to?(:encoding)
-
-          payload.encoding == Encoding::BINARY
         end
 
         # Filtering and renaming AsyncAPI Operation bindings to Bunny/RabitMQ
