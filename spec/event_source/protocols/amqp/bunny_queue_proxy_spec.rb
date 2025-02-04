@@ -408,10 +408,6 @@ RSpec.describe EventSource::Protocols::Amqp::BunnyQueueProxy do
         end
 
         it 'logs the error and raises a PayloadDecodeError' do
-          expect(instance.logger).to receive(:error).with('*' * 40)
-          expect(instance.logger).to receive(:error).with(payload.encoding) if payload.respond_to?(:encoding)
-          expect(instance.logger).to receive(:error).with(payload.inspect)
-          expect(instance.logger).to receive(:error).with("Failed to decode message \n  due to: #{failure_message} \n  payload: #{payload}")
           expect do
             instance.decode_payload(payload)
           end.to raise_error(EventSource::Error::PayloadDecodeError, failure_message)

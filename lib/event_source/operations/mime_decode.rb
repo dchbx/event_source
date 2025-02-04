@@ -8,6 +8,7 @@ module EventSource
     # Operation for decoding payloads, including decompression using Zlib.
     class MimeDecode
       include Dry::Monads[:result, :do]
+      include EventSource::Logging
 
       # Supported MIME types for decoding.
       MIME_TYPES = %w[application/zlib application/json].freeze
@@ -52,20 +53,27 @@ module EventSource
         Success([payload, mime_type])
       end
 
-      # Decodes the payload using the specified MIME type.
-      # For 'application/zlib', it decompresses the payload using Zlib.
+      # Decodes the payload based on the specified MIME type.
+      # For 'application/zlib', it attempts to decompress the payload using Zlib.
+      # If decompression fails due to an error, the original payload is returned unmodified.
       #
       # @param payload [String] the payload to decode
       # @param mime_type [String] the MIME type of the payload
       #
-      # @return [Dry::Monads::Success<String>] if decoding is successful
-      # @return [Dry::Monads::Failure<String>] if decoding fails
+      # @return [Dry::Monads::Success<String>] if decoding is successful or if the MIME type is not 'application/zlib'.
+      # @return [Dry::Monads::Success<String>] if decompression fails, returning the original payload without modification.
+      #
+      # @note If the MIME type is 'application/zlib' and decompression fails, the original payload is returned as is, and no error is raised.
       def decode(payload, mime_type)
-        decoded_data = Zlib.inflate(payload) if mime_type == 'application/zlib' && binary_payload?(payload)
+        return Success(payload) unless mime_type == 'application/zlib'
 
-        Success(decoded_data || payload)
-      rescue Zlib::Error => e
-        Failure("Failed to decode payload using Zlib: #{e.message}")
+        begin
+          decoded_data = Zlib.inflate(payload)
+          Success(decoded_data)
+        rescue Zlib::Error => e
+          logger.error "Zlib errored while inflating payload: #{payload} \n with #{e.class}: #{e.message}, \n returning original payload."
+          Success(payload)
+        end
       end
 
       # Checks whether the payload is binary-encoded.
@@ -77,15 +85,6 @@ module EventSource
         return false unless payload.respond_to?(:encoding)
 
         payload.encoding == Encoding::BINARY
-      end
-
-      # For future reference, here is the implementation of the `zlib_compressed?` method:
-      # Binary encoding check alone is unreliable since the payload may not be zlib-compressed.
-      # Instead, verify if the payload starts with "\x78" to determine zlib compression.
-      def zlib_compressed?(payload)
-        return false unless payload.is_a?(String)
-
-        payload.start_with?("\x78")
       end
 
       def valid_json_string?(data)
