@@ -180,10 +180,6 @@ module EventSource
           if output.success?
             output.value!
           else
-            logger.error '*' * 40
-            logger.error payload.encoding if payload.respond_to?(:encoding)
-            logger.error payload.inspect
-            logger.error "Failed to decode message \n  due to: #{output.failure} \n  payload: #{payload}"
             raise EventSource::Error::PayloadDecodeError, output.failure
           end
         end

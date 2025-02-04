@@ -93,6 +93,20 @@ RSpec.describe EventSource::Operations::MimeDecode do
           expect(result.failure).to eq("Payload must be binary-encoded for MIME type 'application/zlib'.")
         end
       end
-    end    
+
+      context 'when Zlib.inflate raises an exception' do
+        let(:payload) { { message: "Hello, World!" } }
+        let(:invalid_compressed_payload) { Zlib.deflate(payload.to_json) }
+
+        it 'returns the original payload wrapped in Success' do
+          allow(Zlib).to receive(:inflate).and_raise(Zlib::DataError, "invalid compressed data")
+
+          result = subject.call('application/zlib', invalid_compressed_payload)
+
+          expect(result).to be_a(Dry::Monads::Success)
+          expect(result.value!).to eq(invalid_compressed_payload)
+        end
+      end
+    end
   end
 end
