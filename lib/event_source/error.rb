@@ -32,5 +32,7 @@ module EventSource
     ServerConfigurationNotFound = Class.new(Error)
     ServerConfigurationInvalid = Class.new(Error)
     MessageBuildError = Class.new(Error)
+    PayloadEncodeError = Class.new(Error)
+    PayloadDecodeError = Class.new(Error)
   end
 end

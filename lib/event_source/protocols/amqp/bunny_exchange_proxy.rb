@@ -15,6 +15,8 @@ module EventSource
         # @attr_reader [EventSource::Protcols::Amqp::BunnyChannelProxy] channel_proxy the channel_proxy used to create this exchange
         attr_reader :subject, :channel_proxy
 
+        DefaultMimeType = 'application/json'.freeze
+
         # @param [EventSource::AsyncApi::Channel] channel_proxy instance on which to open this Exchange
         # @param [Hash<EventSource::AsyncApi::Exchange>] exchange_bindings instance with configuration for this Exchange
         def initialize(channel_proxy, exchange_bindings)
@@ -49,7 +51,9 @@ module EventSource
           bunny_publish_bindings[:headers] = headers unless headers.empty?
 
           logger.debug "BunnyExchange#publish  publishing message with bindings: #{bunny_publish_bindings.inspect}"
-          @subject.publish(payload.to_json, bunny_publish_bindings)
+
+          @subject.publish(payload, bunny_publish_bindings)
+
           logger.debug "BunnyExchange#publish  published message: #{payload}"
           logger.debug "BunnyExchange#publish  published message to exchange: #{@subject.name}"
         end

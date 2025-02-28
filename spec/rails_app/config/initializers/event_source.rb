@@ -58,6 +58,14 @@ EventSource.configure do |config|
     end
 
     server.http do |http|
+      http.ref = 'http://mitc:3001'
+      http.host = ENV['MITC_HOST'] || 'http://localhost'
+      http.port = ENV['MITC_PORT'] || '3000'
+      http.url = ENV['MITC_URL'] || 'http://localhost:3000'
+      http.default_content_type = 'application/json'
+    end
+
+    server.http do |http|
       http.host = "https://api.github.com"
       http.default_content_type = 'application/json'
     end
@@ -119,7 +127,8 @@ EventSource.configure do |config|
   # AcaEntities::Operations::AsyncApi::FindResource.new.call(self)
 end
 
-dir = Pathname.pwd.join('spec', 'support', 'async_api_files')
+config_dir = File.dirname(__FILE__)
+dir = File.join(config_dir, '..', '..', '..', 'support', 'async_api_files')
 EventSource.async_api_schemas = ::Dir[::File.join(dir, '**', '*')].reject { |p| ::File.directory? p }.sort.reduce([]) do |memo, file|
   # read
   # serialize yaml to hash
@@ -127,4 +136,4 @@ EventSource.async_api_schemas = ::Dir[::File.join(dir, '**', '*')].reject { |p| 
   memo << EventSource::AsyncApi::Operations::AsyncApiConf::LoadPath.new.call(path: file).success
 end
 
-EventSource.initialize!
+# EventSource.initialize!

@@ -25,6 +25,7 @@ module EventSource
         # @return [Bunny::Queue]
         def initialize(channel_proxy, async_api_channel_item)
           @channel_proxy = channel_proxy
+          @async_api_channel_item = async_api_channel_item
           bindings = async_api_channel_item.bindings
           @consumers = []
 
@@ -135,6 +136,15 @@ module EventSource
           subscriber = subscriber_klass.new
           subscriber.channel = @subject.channel
 
+          begin
+            payload = decode_payload(payload)
+          rescue EventSource::Error::PayloadDecodeError, StandardError => e
+            logger.error "Payload decoding failed: #{e.message} \n  backtrace: #{e.backtrace.join("\n")} \n payload: #{payload}"
+            # Acknowledge the message so it doesn't block the queue
+            subscriber.ack(delivery_info.delivery_tag)
+            return
+          end
+
           subscription_handler =
             EventSource::Protocols::Amqp::BunnyConsumerHandler.new(
               subscriber,
@@ -143,12 +153,35 @@ module EventSource
               payload,
               &executable
             )
-
           subscription_handler.run
         rescue Bunny::Exception => e
           logger.error "Bunny Consumer Error \n  message: #{e.message} \n  backtrace: #{e.backtrace.join("\n")}"
         ensure
           subscriber = nil
+        end
+
+        # Decodes the given payload based on the `contentEncoding` specified in the AsyncAPI *_subscribe.yml message bindings.
+        #
+        # For example, if `contentEncoding` is set to `application/zlib`, the payload will be decompressed using zlib.
+        # If no `contentEncoding` is provided, the payload will be returned unchanged.
+        #
+        # @param payload [String] The payload to be decoded.
+        # @return [String] The decoded payload, or the original payload if no encoding is specified.
+        # @raise [EventSource::Error::PayloadDecodeError] if the decoding process fails.
+        def decode_payload(payload)
+          async_api_subscribe_operation = @async_api_channel_item.subscribe
+          return payload unless async_api_subscribe_operation.message
+          
+          message_bindings = async_api_subscribe_operation.message['bindings']
+          encoding = message_bindings.first[1]['contentEncoding'] if message_bindings
+          return payload unless encoding
+
+          output = EventSource::Operations::MimeDecode.new.call(encoding, payload)
+          if output.success?
+            output.value!
+          else
+            raise EventSource::Error::PayloadDecodeError, output.failure
+          end
         end
 
         def find_executable(subscriber_klass, delivery_info)

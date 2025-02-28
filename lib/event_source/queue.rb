@@ -6,15 +6,14 @@ module EventSource
     # @attr_reader [Object] queue_proxy the protocol-specific class supporting this DSL
     # @attr_reader [String] name
     # @attr_reader [Hash] bindings
-    # @attr_reader [Hash] actions
-    attr_reader :queue_proxy, :name, :bindings, :actions
+    attr_reader :queue_proxy, :name, :bindings
 
     def initialize(queue_proxy, name, bindings = {})
       @queue_proxy = queue_proxy
       @name = name
       @bindings = bindings
       @subject = ::Queue.new
-      @actions = []
+      @registered_actions = []
     end
 
     # def subscribe(subscriber_klass, &block)
@@ -48,6 +47,17 @@ module EventSource
     # @return [Boolean]
     def closed?
       @subject.closed?
+    end
+
+    # Register an action to be performed, with a resolver class and key.
+    def register_action(resolver, key)
+      @registered_actions << [resolver, key]
+    end
+
+    def actions
+      @registered_actions.map do |ra|
+        ra.first.executable_for(ra.last)
+      end
     end
   end
 end
