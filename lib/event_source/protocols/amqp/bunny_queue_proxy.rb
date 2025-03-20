@@ -38,14 +38,17 @@ module EventSource
 
         # Find a Bunny queue that matches the configuration of an {EventSource::AsyncApi::ChannelItem}
         def bunny_queue_for(queue_bindings)
+          queue_bindings[:arguments] ||= {}
+          queue_bindings[:arguments]['x-queue-type'] = 'quorum'
+
           queue =
             Bunny::Queue.new(
               channel_proxy.subject,
               queue_bindings[:name],
-              queue_bindings.slice(:durable, :auto_delete, :vhost, :exclusive)
+              queue_bindings.slice(:durable, :auto_delete, :vhost, :exclusive, :arguments)
             )
 
-          logger.info "Found or created Bunny queue #{queue.name}"
+          logger.info "Found or created Bunny quorum queue #{queue.name}"
           queue
         end
 
