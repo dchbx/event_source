@@ -49,7 +49,8 @@ module EventSource
         # @param [Object] subscriber_klass Subscriber class
         # @return [Queue] Queue instance
         def subscribe(subscriber_klass, _options)
-          unique_key = [app_name, formatted_exchange_name].join(delimiter)
+          subscriber_suffix = subscriber_klass.name.downcase.gsub('::', '_')
+          unique_key = [app_name, formatted_exchange_name].join(delimiter) + "_#{subscriber_suffix}"
           logger.debug "FaradayQueueProxy#register_subscription Subscriber Class #{subscriber_klass}"
           logger.debug "FaradayQueueProxy#register_subscription Unique_key #{unique_key}"
           executable = subscriber_klass.executable_for(unique_key)
