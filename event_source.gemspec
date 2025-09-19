@@ -54,6 +54,8 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'mime-types'
   spec.add_dependency 'oj', '~> 3.11'
   spec.add_dependency 'ox', '~> 2.14'
+  # Security: Fix CVE-2025-58767 - REXML DoS vulnerability
+  spec.add_dependency 'rexml', '>= 3.4.2'
   spec.add_dependency 'typhoeus', '~> 1.4.0'
 
   # TODO: Change to development dependency
