@@ -110,5 +110,12 @@ module EventSource
         )
       logger.info "  Subscribe Operation Added: #{operation_id}"
     end
+
+    def cancel_consumers
+      subscribe_operations.each_value do |sub_op|
+        subject = sub_op.subject
+        subject.cancel_consumers! if subject.respond_to?(:cancel_consumers!)
+      end
+    end
   end
 end

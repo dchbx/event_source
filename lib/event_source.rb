@@ -110,6 +110,27 @@ module EventSource
     def register_publisher(subscriber_klass)
       boot_registry.register_publisher(subscriber_klass)
     end
+
+    def inflight_messages_count
+      @inflight_mutex ||= Mutex.new
+      @inflight_mutex.synchronize { @inflight_messages_count ||= 0 }
+    end
+
+    def increment_inflight_messages
+      @inflight_mutex ||= Mutex.new
+      @inflight_mutex.synchronize do
+        @inflight_messages_count ||= 0
+        @inflight_messages_count += 1
+      end
+    end
+
+    def decrement_inflight_messages
+      @inflight_mutex ||= Mutex.new
+      @inflight_mutex.synchronize do
+        @inflight_messages_count ||= 0
+        @inflight_messages_count = [@inflight_messages_count - 1, 0].max
+      end
+    end
   end
 
   class EventSourceLogger

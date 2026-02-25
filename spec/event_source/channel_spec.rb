@@ -92,5 +92,23 @@ RSpec.describe EventSource::Channel do
       expect(audit_log_queue.pop.last).to eq 'test message from enterprise events!!'
       expect(audit_log_queue.pop.last).to eq 'test message from enrollment events!!'
     end
+
+    context '.cancel_consumers' do
+      before do
+        subject.subscribe_operations.values.each do |sub_op|
+          subscriber_klass = double('SubscriberKlass')
+          sub_op.subscribe(subscriber_klass)
+        end
+      end
+
+      it 'cancels consumers via channel' do
+        channel = subject
+        expect(channel.channel_proxy.any_consumers?).to be_truthy
+        expect(channel.subscribe_operations.values.first.subject.consumers.count).to be > 0
+        channel.cancel_consumers
+        expect(channel.channel_proxy.any_consumers?).to be_falsey
+        expect(channel.subscribe_operations.values.first.subject.consumers.count).to eq 0
+      end
+    end
   end
 end

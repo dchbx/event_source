@@ -91,7 +91,7 @@ module EventSource
         end
 
         def add_consumer(subscriber_klass, options)
-          @subject.subscribe(options) do |delivery_info, metadata, payload|
+          consumer = @subject.subscribe(options) do |delivery_info, metadata, payload|
             on_receive_message(
               subscriber_klass,
               delivery_info,
@@ -99,6 +99,7 @@ module EventSource
               payload
             )
           end
+          @consumers << consumer if consumer
         end
 
         def convert_to_subscribe_options(options)
@@ -124,6 +125,7 @@ module EventSource
           metadata,
           payload
         )
+          EventSource.increment_inflight_messages
           logger.debug '**************************'
           logger.debug subscriber_klass.inspect
           logger.debug delivery_info.inspect
@@ -158,6 +160,7 @@ module EventSource
           logger.error "Bunny Consumer Error \n  message: #{e.message} \n  backtrace: #{e.backtrace.join("\n")}"
         ensure
           subscriber = nil
+          EventSource.decrement_inflight_messages
         end
 
         # Decodes the given payload based on the `contentEncoding` specified in the AsyncAPI *_subscribe.yml message bindings.
@@ -196,6 +199,18 @@ module EventSource
         # Forward all missing method calls to the Bunny::Queue instance
         def method_missing(name, *args)
           @subject.send(name, *args)
+        end
+
+        # Cancel all registered consumers for this queue
+        def cancel_consumers!
+          @consumers.each do |consumer|
+            begin
+              consumer.cancel
+            rescue StandardError => e
+              logger.info "Consumer cancellation error: #{e.message}"
+            end
+          end
+          @consumers.clear
         end
 
         private

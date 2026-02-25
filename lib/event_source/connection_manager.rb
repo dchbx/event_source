@@ -160,7 +160,53 @@ module EventSource
       connections
     end
 
+    def cancel_consumers_for(protocol, timeout: 5)
+      protocol_value = protocol.to_s.upcase
+      logger.info "Cancelling #{protocol_value} consumers prior to shutdown"
+      connections = connections_for(protocol)
+      any_consumers = connections.any? { |connection| connection_has_consumers?(connection) }
+      logger.info "#{protocol_value} inflight handlers (before_cancel): #{EventSource.inflight_messages_count}, any_consumers=#{any_consumers}"
+
+      connections.each do |connection|
+        connection.channels.each_value do |channel|
+          channel.cancel_consumers
+        end
+      end
+
+      wait_for_connections_to_drain(connections, timeout)
+
+      logger.info "#{protocol_value} consumer cancellation complete"
+      logger.info "#{protocol_value} inflight handlers (end): #{EventSource.inflight_messages_count}"
+    end
+
     private
+
+    def wait_for_connections_to_drain(connections, timeout)
+      return if connections.empty?
+
+      protocol = connections.first.protocol.to_s.upcase
+      start = Time.now
+
+      loop do
+        inflight = EventSource.inflight_messages_count
+        any_consumers = connections.any? { |connection| connection_has_consumers?(connection) }
+
+        logger.info "#{protocol} inflight handlers (drain): #{inflight}, any_consumers=#{any_consumers}"
+        break if inflight.zero? && !any_consumers
+        break if (Time.now - start) >= timeout
+        sleep 0.1
+      end
+    end
+
+    def connection_has_consumers?(connection)
+      connection.channels.values.any? do |channel|
+        begin
+          channel.channel_proxy.subject.any_consumers?
+        rescue StandardError
+          false
+        end
+      end
+    end
 
     # Find connection proxy class for given protocol
     # @param [Symbol] protocol the protocol name, `:http` or `:amqp`
