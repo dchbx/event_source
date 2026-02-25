@@ -1,0 +1,5 @@
+ENV['RAILS_ENV'] ||= 'test'
+require 'bundler/setup'
+require 'webmock/rspec'
+require 'rails'
+require_relative '../config/environment'
