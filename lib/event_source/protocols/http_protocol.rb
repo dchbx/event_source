@@ -1,9 +1,8 @@
 # frozen_string_literal: true
 
 require 'faraday'
-require 'faraday_middleware'
-require 'typhoeus'
-require 'typhoeus/adapters/faraday'
+require 'faraday/retry'
+require 'faraday/typhoeus'
 require 'uri'
 
 require_relative 'http/error'
