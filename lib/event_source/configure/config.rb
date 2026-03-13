@@ -10,11 +10,12 @@ module EventSource
 
       def initialize
         @log_level = :warn
+        @shutdown_timeouts = { amqp_drain: 5, http_drain: 5 }
       end
 
       # TODO: add default for pub_sub_root
       attr_writer :pub_sub_root, :protocols, :server_configurations
-      attr_accessor :app_name, :log_level
+      attr_accessor :app_name, :log_level, :auto_shutdown, :shutdown_timeouts
 
       def load_protocols
         @protocols.each do |protocol|

@@ -38,10 +38,13 @@ require 'event_source/publisher'
 require 'event_source/event'
 require 'event_source/subscriber'
 require 'event_source/operations/codec64'
+require 'event_source/operations/mime_encode'
+require 'event_source/operations/mime_decode'
 require 'event_source/operations/create_message'
 require 'event_source/operations/fetch_session'
 require 'event_source/operations/build_message_options'
 require 'event_source/operations/build_message'
+require 'event_source/boot_registry'
 
 # Event source provides ability to compose, publish and subscribe to events
 module EventSource
@@ -65,14 +68,23 @@ module EventSource
                    :async_api_schemas=
 
     def configure
+      @configured = true
       yield(config)
     end
 
-    def initialize!
-      load_protocols
-      create_connections
-      load_async_api_resources
-      load_components
+    def initialize!(force = false)
+      # Don't boot if I was never configured.
+      return unless @configured
+      boot_registry.boot!(force) do
+        load_protocols
+        create_connections
+        load_async_api_resources
+        load_components
+      end
+    end
+
+    def boot_registry
+      @boot_registry ||= EventSource::BootRegistry.new
     end
 
     def config
@@ -89,6 +101,35 @@ module EventSource
         .new
         .call(resource)
         .success
+    end
+
+    def register_subscriber(subscriber_klass)
+      boot_registry.register_subscriber(subscriber_klass)
+    end
+
+    def register_publisher(subscriber_klass)
+      boot_registry.register_publisher(subscriber_klass)
+    end
+
+    def inflight_messages_count
+      @inflight_mutex ||= Mutex.new
+      @inflight_mutex.synchronize { @inflight_messages_count ||= 0 }
+    end
+
+    def increment_inflight_messages
+      @inflight_mutex ||= Mutex.new
+      @inflight_mutex.synchronize do
+        @inflight_messages_count ||= 0
+        @inflight_messages_count += 1
+      end
+    end
+
+    def decrement_inflight_messages
+      @inflight_mutex ||= Mutex.new
+      @inflight_mutex.synchronize do
+        @inflight_messages_count ||= 0
+        @inflight_messages_count = [@inflight_messages_count - 1, 0].max
+      end
     end
   end
 
