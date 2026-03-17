@@ -15,7 +15,7 @@ require_relative 'amqp/bunny_consumer_proxy'
 require_relative 'amqp/contracts/contract'
 
 Gem
-  .find_files('event_source/protocols/amqp/contracts/**/*.rb')
+  .find_files('event_source/protocols/amqp/contracts/**/*.rb', false)
   .sort
   .each { |f| require(f) }
 
