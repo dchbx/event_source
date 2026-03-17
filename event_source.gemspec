@@ -56,9 +56,9 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'oj', '~> 3.11'
   spec.add_dependency 'ox', '~> 2.14'
   spec.add_dependency 'typhoeus', '~> 1.4.0'
-  spec.add_dependency 'bigdecimal' if RUBY_VERSION >= '3.4'
-  spec.add_dependency 'base64' if RUBY_VERSION >= '3.4'
-  spec.add_dependency 'mutex_m' if RUBY_VERSION >= '3.4'
+  spec.add_dependency 'bigdecimal'
+  spec.add_dependency 'base64'
+  spec.add_dependency 'mutex_m'
 
   # TODO: Change to development dependency
   spec.add_development_dependency 'database_cleaner'
