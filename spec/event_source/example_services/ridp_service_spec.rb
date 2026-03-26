@@ -50,7 +50,13 @@ RSpec.describe "An example service for RIDP" do
   end
 
   before :each do
-    stub_request(:post, "https://impl.hub.cms.gov/Imp1/RIDPService")
+    stub_request(:post, "https://impl.hub.cms.gov/Imp1/RIDPService").with(
+      headers: {
+        'Accept'=>'*/*',
+        'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
+        'User-Agent' => 'Faraday v1.4.3'
+      }
+    )
     .with do |request|
       puts request.body.inspect
       xml = Nokogiri::XML(request.body)
@@ -64,7 +70,7 @@ RSpec.describe "An example service for RIDP" do
       )
       u_token.present? && t_stamp.present?
     end
-      .to_return(status: 200, body: "", headers: {})
+    .to_return(status: 200, body: "", headers: {})
   end
 
   it "responds to requests" do

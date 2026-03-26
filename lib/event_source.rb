@@ -2,7 +2,7 @@
 
 require 'forwardable'
 require 'date'
-require 'dry-types'
+require 'dry/types/type'
 require 'dry/monads'
 require 'dry/monads/do'
 require 'dry/monads/result'
