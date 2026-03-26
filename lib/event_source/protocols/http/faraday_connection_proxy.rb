@@ -86,7 +86,7 @@ module EventSource
         def build_connection
           request_middleware_params = construct_request_middleware
           response_middleware_params = connection_params[:response_middleware_params]
-          # adapter = connection_params[:adapter]
+          adapter = connection_params[:adapter]
 
           Faraday.new(
             build_faraday_parameters(connection_params)
@@ -105,13 +105,13 @@ module EventSource
 
             conn.response :logger, nil, { headers: true, bodies: true, log_level: :error }
 
-            # conn.adapter :http
-            # last middleware must be adapter
-            # adapter.each_pair do |component, options|
-            #   conn.adapter component.to_s.to_sym, options || {}
-            # end
+            # Adapter must be last - required in Faraday 2.x
+            adapter.each_pair do |component, options|
+              conn.adapter component.to_sym, options || {}
+            end
           end
         end
+
 
         def connection
           @subject

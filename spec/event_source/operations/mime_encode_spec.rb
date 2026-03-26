@@ -46,7 +46,7 @@ RSpec.describe EventSource::Operations::MimeEncode do
 
     context 'when payload cannot be converted to JSON' do
       before do
-        allow(invalid_payload).to receive(:to_json).and_raise(JSON::GeneratorError)
+        allow(invalid_payload).to receive(:to_json).and_raise(JSON::GeneratorError.new('test error'))
       end
 
       it 'returns a failure with JSON::GeneratorError' do
